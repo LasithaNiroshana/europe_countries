@@ -3,6 +3,7 @@ import 'package:json_annotation/json_annotation.dart';
 part 'country.g.dart';
 
 @JsonSerializable()
+//Country model
 class Country{
 
   final Name name;
@@ -27,6 +28,7 @@ class Country{
 }
 
 @JsonSerializable()
+//Name model
 class Name{
   final String commonName;
   final String officialName;
@@ -41,6 +43,7 @@ class Name{
 }
 
  @JsonSerializable()
+ //Flags model
 class Flags{
   final String pngImage;
   final String svgImage;
