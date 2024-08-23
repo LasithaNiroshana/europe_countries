@@ -1,17 +1,16 @@
-// ignore_for_file: library_private_types_in_public_api
-
 import 'package:flutter/material.dart';
 import 'package:europe_countries/data/country.dart';
 import 'package:europe_countries/services/api_service.dart';
+import 'package:dio/dio.dart'; 
 import 'country_detail_screen.dart';
 
 class CountryListScreen extends StatefulWidget {
   final ApiService apiService;
 
-const CountryListScreen({super.key, required this.apiService});
+  const CountryListScreen({super.key, required this.apiService});
 
   @override
-_CountryListScreenState createState() => _CountryListScreenState();
+  _CountryListScreenState createState() => _CountryListScreenState();
 }
 
 class _CountryListScreenState extends State<CountryListScreen> {
@@ -24,10 +23,36 @@ class _CountryListScreenState extends State<CountryListScreen> {
     _fetchCountries();
   }
 
-  void _fetchCountries() {
-    setState(() {
-      _countries = widget.apiService.getEuropeanCountries();
-    });
+  Future<void> _fetchCountries() async {
+    try {
+      setState(() {
+        _countries = widget.apiService.getEuropeanCountries();
+      });
+    } catch (e) {
+      String errorMessage;
+      if (e is DioException) {
+        if (e.type == DioExceptionType.connectionTimeout || e.type == DioExceptionType.receiveTimeout) {
+          errorMessage = 'Request timed out. Please check your internet connection.';
+        } else {
+          errorMessage = 'Network Error: ${e.message}';
+        }
+      } else {
+        errorMessage = 'An unexpected error occurred.';
+      }
+      // Showing Snackbar for errors
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.red,
+          ),
+        );
+      });
+      // Set an empty list to avoid UI crash
+      setState(() {
+        _countries = Future.error(errorMessage);
+      });
+    }
   }
 
   void _sortCountries(List<Country> countries) {
@@ -50,20 +75,21 @@ class _CountryListScreenState extends State<CountryListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('European Countries',
-        style: TextStyle(color: Colors.white),
+        title: const Text(
+          'European Countries',
+          style: TextStyle(color: Colors.white),
         ),
         backgroundColor: Colors.blue,
         actions: [
           DropdownButton<String>(
             dropdownColor: Colors.blue,
-            style:const TextStyle(color: Colors.white),
+            style: const TextStyle(color: Colors.white),
             iconEnabledColor: Colors.white,
             value: _sortCriteria,
             items: ['Name', 'Population', 'Capital'].map((String value) {
               return DropdownMenuItem<String>(
                 value: value,
-                child: Text(value)
+                child: Text(value),
               );
             }).toList(),
             onChanged: (value) {
@@ -82,17 +108,11 @@ class _CountryListScreenState extends State<CountryListScreen> {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
+            // If there's an error, display a message
             return Center(child: Text('Error: ${snapshot.error}'));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return const Center(child: Text('No countries found.'));
           } else {
-            // snapshot.data?.forEach((country) {
-            //   print('Country Name: ${country.name.commonName}');
-            //   print('Capital: ${country.capital.join(', ')}');
-            //   print('Population: ${country.population}');
-            //   print('Region: ${country.region}');
-            //   print('Languages: ${country.languages.values.join(', ')}');
-            // });
             final countries = snapshot.data!;
             _sortCountries(countries);
             return ListView.builder(

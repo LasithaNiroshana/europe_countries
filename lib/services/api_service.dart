@@ -5,14 +5,22 @@ import 'package:europe_countries/data/country.dart';
 part 'api_service.g.dart';
 
 //Defining base rest api url
-@RestApi(baseUrl: "https://restcountries.com/v3.1/")
+// Creating Dio instance with timeout settings
+final dio = Dio(
+  BaseOptions(
+    baseUrl: 'https://restcountries.com/v3.1/',
+    connectTimeout: const Duration(seconds: 10), 
+    receiveTimeout: const Duration(seconds: 8), 
+  ),
+);
+
+@RestApi()
 abstract class ApiService {
   factory ApiService(Dio dio, {String baseUrl}) = _ApiService;
 
-//get reuqest to get countries
+  // Get request to get countries
   @GET("/region/europe?fields=name,capital,flags,region,languages,population")
   Future<List<Country>> getEuropeanCountries();
 }
 
-final dio = Dio();
 final apiService = ApiService(dio);

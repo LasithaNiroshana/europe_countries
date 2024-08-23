@@ -14,6 +14,7 @@ class CountryDetailScreen extends StatelessWidget {
     // print('Region: ${country.region}');
     // print('Languages: ${country.languages.values.join(', ')}');
 
+//Displaying country details
     return Scaffold(
       appBar: AppBar(
         title: Text(country.name.commonName,
